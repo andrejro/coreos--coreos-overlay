@@ -30,10 +30,21 @@ go_build() {
 	local package_name="$1"
 	local binary_name="${package_name##*/}"
 
-	go build -x -p "$(makeopts_jobs)" \
+	ebegin "go build ${package_name}"
+
+	debug-print "EROOT=${EROOT}"
+	debug-print "EPREFIX=${EPREFIX}"
+	debug-print "CC_FOR_TARGET=${CC_FOR_TARGET}"
+	debug-print $(go env)
+
+	go build -v \
+		-p "$(makeopts_jobs)" \
 		-ldflags "${GO_LDFLAGS} -extldflags '${LDFLAGS}'" \
-		-o "${GOBIN}/${binary_name}" "${package_name}" \
-		|| die "${ECLASS}: go build failed"
+		-o "${GOBIN}/${binary_name}" \
+		"${package_name}"
+
+	local e=${?}
+	eend ${e} "${FUNCNAME}: ${package_name} failed (${e})." || die
 }
 
 coreos-go_src_prepare() {
@@ -42,10 +53,9 @@ coreos-go_src_prepare() {
 	export GOARCH=$(go_get_arch)
 	export GOPATH="${WORKDIR}/gopath"
 	export GOBIN="${GOPATH}/bin"
-	
-	debug-print "${FUNCNAME}: GOARCH=${GOARCH}"
-	debug-print "${FUNCNAME}: GOPATH=${GOPATH}"
-	debug-print "${FUNCNAME}: GOBIN=${GOBIN}"
+	export CC_FOR_TARGET=$(tc-getCC)
+	export CC=$(tc-getCC)
+	export CXX=$(tc-getCC)
 
 	mkdir -p "${GOBIN}" || die "${ECLASS}: bad path: ${GOBIN}"
 
@@ -53,7 +63,8 @@ coreos-go_src_prepare() {
 		die "${ECLASS}: COREOS_GO_PACKAGE must be defined by the ebuild"
 	fi
 
-	local package_path="${GOPATH}/src/${COREOS_GO_PACKAGE}"
+	# Setup symlink between source files and go workspace.
+	local package_path="${WORKDIR}/gopath/src/${COREOS_GO_PACKAGE}"
 	mkdir -p "${package_path%/*}" || die "${ECLASS}: bad path: ${package_path%/*}"
 	ln -sT "${S}" "${package_path}" || die "${ECLASS}: bad path: ${S}"
 
@@ -63,7 +74,6 @@ coreos-go_src_prepare() {
 		append-ldflags -nopie
 	fi
 
-	export CC=$(tc-getCC)
 	export CGO_ENABLED=${CGO_ENABLED:-1}
 	export CGO_CFLAGS="${CFLAGS}"
 	export CGO_CPPFLAGS="${CPPFLAGS}"
