@@ -123,3 +123,6 @@ sys-apps/ignition ~amd64
 # HACK: test for compatability
 =sys-devel/gcc-4.9.2 ~amd64
 
+# HACK: test for compatability
+app-emulation/rkt ~amd64
+
