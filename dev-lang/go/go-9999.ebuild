@@ -8,7 +8,7 @@ inherit eutils toolchain-funcs
 
 EGIT_REPO_URI="git://github.com/golang/go.git"
 inherit git-r3
-KEYWORDS="-* ~amd64 arm64"
+KEYWORDS="-* amd64 arm64"
 
 DESCRIPTION="A concurrent garbage collected and typesafe programming language"
 HOMEPAGE="http://www.golang.org"
