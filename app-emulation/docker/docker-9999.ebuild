@@ -154,6 +154,14 @@ pkg_setup() {
 }
 
 src_prepare() {
+	if [[ "${ARCH}" = "arm64" ]]; then
+		# Upstream fix https://github.com/docker/libcontainer/pull/618
+		epatch "${FILESDIR}"/fix-dup2-618.patch
+
+		# Upstream fix https://github.com/vishvananda/netns/pull/6
+		epatch "${FILESDIR}"/vendor-netns-Add-linux-arm64-support.patch
+	fi
+
 	# allow user patches (use sparingly - upstream won't support them)
 	epatch_user
 }

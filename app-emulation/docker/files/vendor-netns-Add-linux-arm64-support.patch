@@ -1,0 +1,13 @@
+diff --git a/vendor/src/github.com/vishvananda/netns/netns_linux_arm64.go b/vendor/src/github.com/vishvananda/netns/netns_linux_arm64.go
+new file mode 100644
+index 0000000..741a302
+--- /dev/null
++++ vendor/src/github.com/vishvananda/netns/netns_linux_arm64.go
+@@ -0,0 +1,7 @@
++// +build linux,arm64
++
++package netns
++
++const (
++	SYS_SETNS = 268
++)
