@@ -115,6 +115,10 @@ src_prepare() {
 }
 
 src_install() {
-	insinto /lib/firmware/
-	doins -r *
+	local list=$(find -type f) || die
+
+	if [[ -n ${list} ]] ; then
+		insinto /lib/firmware/
+		doins -r ${list}
+	fi
 }
