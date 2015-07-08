@@ -1,0 +1,52 @@
+From 22c5e2abd113074423fa30f59e5feae239cd26bc Mon Sep 17 00:00:00 2001
+From: Geoff Levand <geoff@infradead.org>
+Date: Mon, 8 Jun 2015 15:58:29 -0700
+Subject: [PATCH] linux: Convert dup2 calls to dup3
+
+Convert syscall.Dup2 calls to syscall.Dup3.  The dup2 syscall is depreciated
+and is not available on some architectures.  Fixes build errors like these when
+building for arm64:
+
+  console_linux.go: undefined: syscall.Dup2
+
+Signed-off-by: Geoff Levand <geoff@infradead.org>
+---
+ console_linux.go | 4 ++--
+ rootfs_linux.go  | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/vendor/src/github.com/docker/libcontainer/console_linux.go b/vendor/src/github.com/docker/libcontainer/console_linux.go
+index 5eaf031..e35ac52 100644
+--- a/vendor/src/github.com/docker/libcontainer/console_linux.go
++++ b/vendor/src/github.com/docker/libcontainer/console_linux.go
+@@ -92,7 +92,7 @@ func (c *linuxConsole) mount(rootfs, mountLabel string, uid, gid int) error {
+ 	return syscall.Mount(c.slavePath, dest, "bind", syscall.MS_BIND, "")
+ }
+ 
+-// dupStdio opens the slavePath for the console and dup2s the fds to the current
++// dupStdio opens the slavePath for the console and dups the fds to the current
+ // processes stdio, fd 0,1,2.
+ func (c *linuxConsole) dupStdio() error {
+ 	slave, err := c.open(syscall.O_RDWR)
+@@ -101,7 +101,7 @@ func (c *linuxConsole) dupStdio() error {
+ 	}
+ 	fd := int(slave.Fd())
+ 	for _, i := range []int{0, 1, 2} {
+-		if err := syscall.Dup2(fd, i); err != nil {
++		if err := syscall.Dup3(fd, i, 0); err != nil {
+ 			return err
+ 		}
+ 	}
+diff --git a/vendor/src/github.com/docker/libcontainer/rootfs_linux.go b/vendor/src/github.com/docker/libcontainer/rootfs_linux.go
+index 4ddfff1..0b0c381 100644
+--- a/vendor/src/github.com/docker/libcontainer/rootfs_linux.go
++++ b/vendor/src/github.com/docker/libcontainer/rootfs_linux.go
+@@ -272,7 +272,7 @@ func reOpenDevNull(rootfs string) error {
+ 		}
+ 		if stat.Rdev == devNullStat.Rdev {
+ 			// Close and re-open the fd.
+-			if err := syscall.Dup2(int(file.Fd()), fd); err != nil {
++			if err := syscall.Dup3(int(file.Fd()), fd, 0); err != nil {
+ 				return err
+ 			}
+ 		}
