@@ -115,3 +115,5 @@ dev-util/checkbashisms
 =app-editors/vim-7.4.712
 =app-editors/vim-core-7.4.712
 
+# Debugging: for ebuild testing
+sys-apps/ignition ~amd64
