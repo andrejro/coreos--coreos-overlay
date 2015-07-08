@@ -18,10 +18,10 @@ HOMEPAGE="http://www.kernel.org"
 LICENSE="GPL-2 freedist"
 SLOT="0/${PVR}"
 SRC_URI=""
-IUSE="selinux"
+IUSE="selinux initramfs"
 
 DEPEND="=sys-kernel/coreos-sources-${COREOS_SOURCE_VERSION}
-	sys-kernel/bootengine:="
+	initramfs? ( sys-kernel/bootengine:= )"
 
 # Do not analyze or strip installed files
 RESTRICT="binchecks strip"
@@ -130,9 +130,11 @@ coreos-kernel_src_prepare() {
 	elog "Using kernel config: ${config}"
 	cp -f "${config}" "${KBUILD_OUTPUT}/.config" || die
 
-	# copy the cpio initrd to the output build directory so we can tack it
-	# onto the kernel image itself.
-	cp "${ROOT}"/usr/share/bootengine/bootengine.cpio "${KBUILD_OUTPUT}" || die
+	if use initramfs; then
+		# copy the cpio initrd to the output build directory so we can
+		# tack it onto the kernel image itself.
+		cp "${ROOT}"/usr/share/bootengine/bootengine.cpio "${KBUILD_OUTPUT}" || die
+	fi
 
 	# make sure no keys are cached from a previous build
 	shred_keys
@@ -164,13 +166,16 @@ coreos-kernel_src_compile() {
 		  INSTALL_MOD_STRIP="--strip-unneeded" \
 		  modules_install
 
-	local bootengine_lib=$(get_bootengine_lib)
-	if [[ -n "${bootengine_lib}" ]]; then
-		mkdir -p "$(dirname "${bootengine_root}/${bootengine_lib}")" || die
-		mv "${bootengine_root}/lib" \
-			"${bootengine_root}/${bootengine_lib}" || die
+	if use initramfs; then
+		local bootengine_lib=$(get_bootengine_lib)
+		if [[ -n "${bootengine_lib}" ]]; then
+			mkdir -p "$(dirname "${bootengine_root}/${bootengine_lib}")" || die
+			mv "${bootengine_root}/lib" \
+				"${bootengine_root}/${bootengine_lib}" || die
+		fi
+
+		update_bootengine_cpio "${bootengine_root}"
 	fi
-	update_bootengine_cpio "${bootengine_root}"
 
 	# Build the final kernel image
 	kmake
