@@ -109,3 +109,6 @@ dev-util/checkbashisms
 
 # Avoid cross compile error with amd64 stable (elfutils-0.158).
 =dev-libs/elfutils-0.161 ~amd64
+
+# Debugging: for ebuild testing
+sys-apps/ignition ~amd64
