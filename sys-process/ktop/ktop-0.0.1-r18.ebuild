@@ -21,8 +21,13 @@ IUSE=""
 
 DEPEND="sys-libs/ncurses"
 
+src_prepare() {
+	epatch "${FILESDIR}"/ktop-syscall-fixes.diff
+}
+
 src_compile() {
 	tc-export CC
+	export target='aaaa'
 	emake || die
 }
 
