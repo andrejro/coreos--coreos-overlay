@@ -5,3 +5,4 @@ dev-libs/gobject-introspection-1.40.0-r1
 sys-apps/kexec-tools-2.0.4-r1
 dev-util/boost-build-1.55.0
 app-crypt/gnupg-2.0.26-r3
+coreos-base/update_engine-0.1.0-r3
