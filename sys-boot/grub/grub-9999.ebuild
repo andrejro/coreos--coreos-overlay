@@ -10,7 +10,7 @@ GRUB_AUTOGEN=1
 PYTHON_COMPAT=( python{2_6,2_7,3_2,3_3,3_4} )
 
 if [[ "${PV}" == 9999 ]]; then
-	KEYWORDS="~amd64 ~x86"
+	KEYWORDS="~amd64 ~x86 ~arm64"
 else
 	CROS_WORKON_COMMIT="adf8c776a147d65ad53fd28c809ab8189283a99b"
 	KEYWORDS="amd64 x86"
@@ -42,6 +42,8 @@ GRUB_ALL_PLATFORMS=(
 	coreboot multiboot efi-32 pc qemu xen
 	# amd64, ia64:
 	efi-64
+	# arm64
+	arm64
 )
 IUSE+=" ${GRUB_ALL_PLATFORMS[@]/#/grub_platforms_}"
 
@@ -165,6 +167,7 @@ setup_fonts() {
 
 grub_configure() {
 	local platform
+	local myeconfargs
 
 	case ${MULTIBUILD_VARIANT} in
 		efi-32)
@@ -180,11 +183,15 @@ grub_configure() {
 				local TARGET_CPPFLAGS="-march=x86-64 ${TARGET_CPPFLAGS}"
 				export TARGET_CFLAGS TARGET_CPPFLAGS
 			fi ;;
+		arm64)
+			platform=efi
+			export TARGET_CC=aarch64-cros-linux-gnu-gcc
+			myeconfargs+=( --target=aarch64-cros-linux-gnu ) ;;
 		guessed) ;;
 		*)	platform=${MULTIBUILD_VARIANT} ;;
 	esac
 
-	local myeconfargs=(
+	myeconfargs+=(
 		--disable-werror
 		--program-prefix=
 		--libdir="${EPREFIX}"/usr/lib
