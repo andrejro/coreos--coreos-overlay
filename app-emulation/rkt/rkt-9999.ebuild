@@ -15,16 +15,20 @@ CROS_WORKON_LOCALNAME="rkt"
 CROS_WORKON_REPO="git://github.com"
 
 if [[ "${PV}" == "9999" ]]; then
-	KEYWORDS="~amd64"
+	KEYWORDS="~amd64 ~arm64"
 	PXE_VERSION="738.1.0"
 
 elif [[ "${PV}" == "0.7.0" ]]; then
-	KEYWORDS="amd64"
+	KEYWORDS="amd64 arm64"
 	PXE_VERSION="709.0.0"
 	CROS_WORKON_COMMIT="9579f4bf57851a1a326c81ec2ab0ed2fdfab8d24"
 fi
 
-PXE_URI="http://alpha.release.core-os.net/amd64-usr/${PXE_VERSION}/coreos_production_pxe_image.cpio.gz"
+# FIXME: need per bord support!!!
+COREOS_BOARD="amd64-usr"
+
+# FIXME: need arm64 image!!!
+PXE_URI="http://alpha.release.core-os.net/${COREOS_BOARD}/${PXE_VERSION}/coreos_production_pxe_image.cpio.gz"
 PXE_FILE="${PN}-pxe-${PXE_VERSION}.img"
 
 SRC_URI="rkt_stage1_coreos? ( $PXE_URI -> $PXE_FILE )"
@@ -59,6 +63,10 @@ src_prepare() {
 	epatch "${FILESDIR}"/Add-GOARCH_FOR_BUILD.patch
 }
 
+go_get_arch() {
+	echo ${ARCH}
+}
+
 src_configure() {
 	local myeconfargs=(
 		--with-stage1-image-path="/usr/share/rkt/stage1.aci"
@@ -76,12 +84,16 @@ src_configure() {
 		cp "${DISTDIR}/${PXE_FILE}" "${BUILDDIR}/tmp/usr_from_coreos/pxe.img" || die
 	fi
 
+	# FIXME: Need to fix rkt stage1 build errors!!!
+	myeconfargs=( --with-stage1="none" )
+
 	# Go's 6l linker does not support PIE, disable so cgo binaries
 	# which use 6l+gcc for linking can be built correctly.
 	if gcc-specs-pie; then
 		append-ldflags -nopie
 	fi
 
+	export GOARCH=$(go_get_arch)
 	export CC=$(tc-getCC)
 	export CGO_ENABLED=1
 	export CGO_CFLAGS="${CFLAGS}"
@@ -94,6 +106,10 @@ src_configure() {
 }
 
 src_install() {
+	# FIXME: stage1 workarounds!!!
+	touch ${S}/${BUILDDIR}/bin/actool
+	touch ${S}/${BUILDDIR}/bin/stage1.aci
+
 	dodoc README.md
 	use doc && dodoc -r Documentation
 	use examples && dodoc -r examples
