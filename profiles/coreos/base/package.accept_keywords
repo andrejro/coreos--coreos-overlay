@@ -124,3 +124,6 @@ dev-util/checkbashisms
 =sys-apps/man-pages-4.00
 # Fixes conflict with man-pages 4.00
 =sys-apps/attr-2.4.47-r2
+
+# Debugging: for ebuild testing
+sys-apps/ignition ~amd64
