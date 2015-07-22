@@ -127,3 +127,7 @@ dev-util/checkbashisms
 
 # Debugging: for ebuild testing
 sys-apps/ignition ~amd64
+
+# HACK: test for compatability
+=sys-devel/gcc-4.9.2 ~amd64
+
