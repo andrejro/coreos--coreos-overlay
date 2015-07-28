@@ -1,0 +1,87 @@
+From c05fcb6c9116365f8c80357d8ee34e69a53fefce Mon Sep 17 00:00:00 2001
+From: Geoff Levand <geoff@infradead.org>
+Date: Tue, 28 Jul 2015 11:21:42 -0700
+Subject: [PATCH 1/3] build: Add GOARCH_FOR_BUILD
+
+When generating tools to use during the build they should be built for the build
+machine, and not the target.
+
+Add a section to configure.ac that sets up the make variable GOARCH_FOR_BUILD
+which holds the value that GOARCH should be set to when building go language
+build tools.  Also change depsgentool.mk to use GOARCH_FOR_BUILD.
+
+Fixes errors like these when cross building:
+
+  /bin/bash: tools/depsgen.tmp: No such file or directory
+
+Signed-off-by: Geoff Levand <geoff@infradead.org>
+---
+ configure.ac            | 17 +++++++++++++++++
+ depsgentool.mk          |  1 +
+ makelib/variables.mk.in |  3 +++
+ 3 files changed, 21 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 62caa02..7412ee7 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -2,6 +2,7 @@ AC_PREREQ([2.68])
+ AC_INIT([rkt], [0.7.0+git], [https://github.com/coreos/rkt/issues])
+ 
+ AC_CANONICAL_HOST
++AC_CANONICAL_BUILD
+ 
+ AC_DEFUN([RKT_REQ_PROG],
+          [AS_VAR_IF([$1], [],
+@@ -161,6 +162,22 @@ AS_IF([test "x${RKT_RUN_FUNCTIONAL_TESTS}" = 'xyes' -o "x${RKT_RUN_FUNCTIONAL_TE
+ 
+ AC_SUBST(RKT_RUN_FUNCTIONAL_TESTS)
+ 
++# cross_compiling is a standard autoconf variable.  See the autoconf manual for
++# details.
++AS_VAR_IF([cross_compiling], [no], [GOARCH_FOR_BUILD=${GOARCH_FOR_BUILD:-${GOARCH}}],
++	[AC_MSG_CHECKING([build golang arch])
++	AS_VAR_IF([GOARCH_FOR_BUILD], [],
++		[AS_CASE([${build_cpu}],
++			[x86_64], [GOARCH_FOR_BUILD="amd64"],
++			[aarch64], [GOARCH_FOR_BUILD="arm64"],
++			[powerpc], [GOARCH_FOR_BUILD="ppc64"],
++			[AC_MSG_RESULT([unknown]); AC_MSG_ERROR([unknown build cpu: ${build_cpu}.  Set GOARCH_FOR_BUILD variable.])]);
++		AC_MSG_RESULT([${GOARCH_FOR_BUILD}])],
++		[AC_MSG_RESULT([user supplied ${GOARCH_FOR_BUILD}])])]
++	)
++
++AC_SUBST(GOARCH_FOR_BUILD)
++
+ # Checks for programs.
+ AC_PROG_CC
+ AC_PROG_INSTALL
+diff --git a/depsgentool.mk b/depsgentool.mk
+index 6977de4..e6abe9f 100644
+--- a/depsgentool.mk
++++ b/depsgentool.mk
+@@ -3,6 +3,7 @@ $(call setup-stamp-file,DEPSGENTOOL_STAMP)
+ # variables for makelib/build_go_bin.mk
+ BGB_PKG_IN_REPO := tools/depsgen
+ BGB_BINARY := $(DEPSGENTOOL)
++BGB_ADDITIONAL_GO_ENV := GOARCH=$(GOARCH_FOR_BUILD)
+ 
+ CLEAN_FILES += $(DEPSGENTOOL)
+ 
+diff --git a/makelib/variables.mk.in b/makelib/variables.mk.in
+index 8c30223..4720b59 100644
+--- a/makelib/variables.mk.in
++++ b/makelib/variables.mk.in
+@@ -17,6 +17,9 @@ INSTALL_DATA = @INSTALL_DATA@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
+ INSTALL_SCRIPT = @INSTALL_SCRIPT@
+ 
++# build related variables
++GOARCH_FOR_BUILD := @GOARCH_FOR_BUILD@
++
+ # these are rkt-build specific variables
+ 
+ # binaries we need to build things
+-- 
+2.1.0
+

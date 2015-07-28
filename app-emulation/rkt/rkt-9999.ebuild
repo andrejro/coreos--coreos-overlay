@@ -55,6 +55,10 @@ RDEPEND="!app-emulation/rocket
 
 BUILDDIR="build-${P}"
 
+src_prepare() {
+	epatch "${FILESDIR}"/Add-GOARCH_FOR_BUILD.patch
+}
+
 src_configure() {
 	local myeconfargs=(
 		--with-stage1-image-path="/usr/share/rkt/stage1.aci"
