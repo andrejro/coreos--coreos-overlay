@@ -39,15 +39,24 @@ sys-apps/usbutils ~arm64
 net-misc/bridge-utils ~arm64
 net-libs/serf ~arm64
 dev-vcs/subversion ~arm64
-dev-libs/apr ~arm64
 sys-libs/libseccomp ~arm64
+
+=dev-libs/apr-1.5.2 ~arm64
+=dev-libs/apr-util-1.5.4 ~arm64
+
+net-fs/nfs-utils ~arm64
+
+=dev-db/sqlite-3.8.10.2 ~arm64
+
+#=sys-apps/smartmontools-9999 **
+=sys-apps/smartmontools-6.4 **
+
 
 =sys-block/thin-provisioning-tools-0.4.1 **
 =sys-fs/cryptsetup-1.6.7 **
 =sys-fs/xfsprogs-3.2.2 **
 =sys-apps/i2c-tools-3.1.1-r1 **
 =sys-apps/ethtool-3.18 **
-=sys-apps/smartmontools-9999 **
 =sys-apps/lshw-02.17b-r1 **
 =net-firewall/ebtables-2.0.10.4-r1 **
 =net-firewall/ipset-6.24 **

@@ -18,7 +18,7 @@ HOMEPAGE="http://www.kernel.org"
 LICENSE="GPL-2 freedist"
 SLOT="0/${PVR}"
 SRC_URI=""
-IUSE="selinux initramfs"
+IUSE="selinux +initramfs"
 
 DEPEND="=sys-kernel/coreos-sources-${COREOS_SOURCE_VERSION}
 	initramfs? ( sys-kernel/bootengine:= )"

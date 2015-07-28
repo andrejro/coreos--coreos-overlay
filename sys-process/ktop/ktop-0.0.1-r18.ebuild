@@ -22,7 +22,7 @@ IUSE=""
 DEPEND="sys-libs/ncurses"
 
 src_prepare() {
-	epatch "${FILESDIR}"/ktop-syscall-fixes.diff
+	epatch "${FILESDIR}"/ktop-arm64-syscall-fixes.diff
 }
 
 src_compile() {

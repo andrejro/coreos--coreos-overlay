@@ -1,0 +1,17 @@
+[Unit]
+Description=Ignition
+DefaultDependencies=false
+
+Requires=local-fs-pre.target
+Before=local-fs-pre.target
+
+Requires=mnt-oem.mount
+After=mnt-oem.mount
+
+[Service]
+Type=oneshot
+TimeoutStartSec=30s
+Environment=OEM_ID=pxe
+Environment=FETCH_TIMEOUT=1m
+EnvironmentFile=-/mnt/oem/oem-release
+ExecStart=/usr/bin/ignition --root=/sysroot --oem=${OEM_ID} --stage=disks --fetchtimeout=${FETCH_TIMEOUT}

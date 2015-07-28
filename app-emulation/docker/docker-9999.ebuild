@@ -13,12 +13,12 @@ CROS_WORKON_REPO="git://github.com"
 
 if [[ ${PV} == *9999 ]]; then
 	DOCKER_GITCOMMIT="unknown"
-	KEYWORDS=""
+	KEYWORDS="~amd64 ~arm64"
 else
 	if [[ "${ARCH}" = "arm64" ]]; then
 		CROS_WORKON_COMMIT="424bb26b6c7d4042acd388c09a6e412178d87271"
 	else
-		CROS_WORKON_COMMIT="7c8fca2ddb58c8d2c4fb4df31c242886df7dd257" # v1.6.2
+		CROS_WORKON_COMMIT="786b29d4db80a6175e72b47a794ee044918ba734" # v1.7.1
 	fi
 	DOCKER_GITCOMMIT="${CROS_WORKON_COMMIT:0:7}"
 	KEYWORDS="amd64 arm64"

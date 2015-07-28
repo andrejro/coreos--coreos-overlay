@@ -1,79 +1,123 @@
-# Copyright (c) 2015 CoreOS, Inc.
+# Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
+# $Header: $
 
 EAPI=5
+
+AUTOTOOLS_AUTORECONF=yes
+AUTOTOOLS_IN_SOURCE_BUILD=yes
+
+inherit autotools-utils flag-o-matic systemd toolchain-funcs
+inherit cros-workon
+
 CROS_WORKON_PROJECT="coreos/rkt"
 CROS_WORKON_LOCALNAME="rkt"
 CROS_WORKON_REPO="git://github.com"
-COREOS_GO_PACKAGE="github.com/coreos/rkt"
-inherit cros-workon systemd coreos-go
 
-if [[ "${PV}" == 9999 ]]; then
-    KEYWORDS="~amd64 ~arm64"
-else
-    CROS_WORKON_COMMIT="40ced98c320c056e343fe9c3eaeb90a4ff248936" # v0.5.5
-    KEYWORDS="amd64 arm64"
+if [[ "${PV}" == "9999" ]]; then
+	KEYWORDS="~amd64 ~arm64"
+	PXE_VERSION="738.1.0"
+
+elif [[ "${PV}" == "0.7.0" ]]; then
+	KEYWORDS="amd64 arm64"
+	PXE_VERSION="709.0.0"
+	CROS_WORKON_COMMIT="9579f4bf57851a1a326c81ec2ab0ed2fdfab8d24"
 fi
 
-# Must be in sync with stage1/rootfs/usr_from_coreos/cache.sh
-IMG_RELEASE="444.5.0"
-IMG_URL="http://stable.release.core-os.net/amd64-usr/${IMG_RELEASE}/coreos_production_pxe_image.cpio.gz"
-#IMG_URL="http://stable.release.core-os.net/${ARCH}-usr/${IMG_RELEASE}/	coreos_production_pxe_image.cpio.gz"
-IMAGE_FILE="pxe-${IMG_RELEASE}.img"
+# FIXME: need per bord support!!!
+COREOS_BOARD="amd64-usr"
 
-DESCRIPTION="App Container runtime"
+# FIXME: need arm64 image!!!
+PXE_URI="http://alpha.release.core-os.net/${COREOS_BOARD}/${PXE_VERSION}/coreos_production_pxe_image.cpio.gz"
+PXE_FILE="${PN}-pxe-${PXE_VERSION}.img"
+
+SRC_URI="rkt_stage1_coreos? ( $PXE_URI -> $PXE_FILE )"
+
+DESCRIPTION="A CLI for running app containers, and an implementation of the App
+Container Spec."
 HOMEPAGE="https://github.com/coreos/rkt"
-SRC_URI="${IMG_URL} -> ${IMAGE_FILE}"
 
 LICENSE="Apache-2.0"
 SLOT="0"
-IUSE=""
+IUSE="doc examples +rkt_stage1_coreos rkt_stage1_host rkt_stage1_src +actool"
+REQUIRED_USE="^^ ( rkt_stage1_coreos rkt_stage1_host rkt_stage1_src )"
 
-DEPEND="app-arch/cpio
-	sys-fs/squashfs-tools"
-RDEPEND="!app-emulation/rocket"
+DEPEND=">=dev-lang/go-1.4.1
+	app-arch/cpio
+	sys-fs/squashfs-tools
+	dev-perl/Capture-Tiny
+	rkt_stage1_src? (
+		>=sys-apps/systemd-220
+		app-shells/bash
+	)"
+RDEPEND="!app-emulation/rocket
+	actool? ( !app-emulation/actool )
+	rkt_stage1_host? (
+		>=sys-apps/systemd-220
+		app-shells/bash
+	)"
 
-src_unpack() {
-	debug-print-function ${PN}-${FUNCNAME} "$@"
+BUILDDIR="build-${P}"
 
-	local cache="${S}/stage1/rootfs/usr_from_coreos/cache"
-
-	cros-workon_src_unpack
-
-	mkdir -p "${cache}" || die
-	cp "${DISTDIR}/${IMAGE_FILE}" "${cache}/pxe.img" || die
+go_get_arch() {
+	echo ${ARCH}
 }
 
-src_compile() {
-	debug-print-function ${PN}-${FUNCNAME} "$@"
+src_configure() {
+	local myeconfargs=(
+		--with-stage1-image-path="/usr/share/rkt/stage1.aci"
+	)
 
-	ebegin "Building rkt (stage0)"
+	if use rkt_stage1_host; then
+		myeconfargs+=( --with-stage1="host" )
+	fi
+	if use rkt_stage1_src; then
+		myeconfargs+=( --with-stage1="src" )
+	fi
+	if use rkt_stage1_coreos; then
+		myeconfargs+=( --with-stage1="coreos" )
+		mkdir -p "${BUILDDIR}/tmp/usr_from_coreos/" || die
+		cp "${DISTDIR}/${PXE_FILE}" "${BUILDDIR}/tmp/usr_from_coreos/pxe.img" || die
+	fi
 
-	#RKT_STAGE1_USR_FROM="coreos"
-	#RKT_STAGE1_IMAGE="/usr/share/rkt/stage1.aci"
-	#GO_LDFLAGS+="-X main.defaultStage1Image '${RKT_STAGE1_IMAGE}'"
+	# FIXME: Need to fix rkt stage1 build errors!!!
+	myeconfargs=( --with-stage1="none" )
 
-	go_build "${COREOS_GO_PACKAGE}/rkt"
+	# Go's 6l linker does not support PIE, disable so cgo binaries
+	# which use 6l+gcc for linking can be built correctly.
+	if gcc-specs-pie; then
+		append-ldflags -nopie
+	fi
 
-	eend ${?} "Building rkt (stage0) failed" || die
+	export GOARCH=$(go_get_arch)
+	export CC=$(tc-getCC)
+	export CGO_ENABLED=1
+	export CGO_CFLAGS="${CFLAGS}"
+	export CGO_CPPFLAGS="${CPPFLAGS}"
+	export CGO_CXXFLAGS="${CXXFLAGS}"
+	export CGO_LDFLAGS="${LDFLAGS}"
+	export BUILDDIR
 
-	ebegin "Building rkt network plugins"
-	einfo "FIXME: TODO"
-	true
-	eend ${?} "Building rkt network plugins failed" || die
+	autotools-utils_src_configure
 }
 
 src_install() {
-	debug-print-function ${PN}-${FUNCNAME} "$@"
+	# FIXME: stage1 workarounds!!!
+	touch ${S}/${BUILDDIR}/bin/actool
+	touch ${S}/${BUILDDIR}/bin/stage1.aci
 
-	local prefix="/usr/share/rkt"
+	dodoc README.md
+	use doc && dodoc -r Documentation
+	use examples && dodoc -r examples
+	use actool && dobin "${S}/${BUILDDIR}/bin/actool"
 
-	dobin "${GOBIN}/rkt"
+	dobin "${S}/${BUILDDIR}/bin/rkt"
 
-	insinto ${prefix}
-	doins "${DISTDIR}/${IMAGE_FILE}"
-	dosym "${IMAGE_FILE}" "${prefix}/stage1.aci"
+	insinto /usr/share/rkt/
+	doins "${S}/${BUILDDIR}/bin/stage1.aci"
 
 	systemd_dounit "${FILESDIR}"/${PN}-gc.service
 	systemd_dounit "${FILESDIR}"/${PN}-gc.timer
+	systemd_dounit "${S}"/dist/init/systemd/${PN}-metadata.service
+	systemd_dounit "${S}"/dist/init/systemd/${PN}-metadata.socket
 }
