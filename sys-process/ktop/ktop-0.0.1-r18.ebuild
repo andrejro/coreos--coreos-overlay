@@ -27,7 +27,6 @@ src_prepare() {
 
 src_compile() {
 	tc-export CC
-	export target='aaaa'
 	emake || die
 }
 
