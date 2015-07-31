@@ -9,3 +9,9 @@ dev-lang/python sqlite
 
 # only required until gtk-doc and friends is pruned from everyone's SDKs
 dev-libs/libxml2 python
+
+# build a static qemu executable to run chroot in arm64 rootfs
+dev-libs/glib static-libs
+sys-apps/attr static-libs
+sys-libs/zlib static-libs
+app-emulation/qemu qemu_user_targets_aarch64 static-user
