@@ -97,7 +97,7 @@ FEATURES="buildpkg clean-logs compressdebug parallel-install splitdebug
 PORTAGE_WORKDIR_MODE="0755"
 
 # Enable our assorted Grub targets, don't whine about /boot
-GRUB_PLATFORMS="efi-64 pc xen"
+GRUB_PLATFORMS="efi-64 pc xen arm64"
 DONT_MOUNT_BOOT=1
 
 # Both x86_64 and i386 targets are required for grub testing
