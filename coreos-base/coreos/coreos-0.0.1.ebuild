@@ -95,7 +95,6 @@ RDEPEND="${RDEPEND}
 	)"
 
 RDEPEND="${RDEPEND}
-	app-emulation/rkt[actool]
 	app-emulation/xenstore
 	amd64? ( app-emulation/xenserver-pv-version )
 	sys-apps/findutils
@@ -154,7 +153,6 @@ RDEPEND="${RDEPEND}
 	sys-libs/timezone-data
 	sys-process/lsof
 	sys-process/procps
-	app-emulation/docker
 	app-misc/ca-certificates
 	app-crypt/gnupg
 	virtual/udev
