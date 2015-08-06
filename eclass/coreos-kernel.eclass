@@ -7,8 +7,17 @@
 # Revision of the source ebuild, e.g. -r1. default is ""
 : ${COREOS_SOURCE_REVISION:=}
 
+# @ECLASS-VARIABLE: COREOS_TARGET_BOARD
+# @DESCRIPTION:
+# Target board name, e.g. "hikey". default is ""
+: ${COREOS_TARGET_BOARD:=}
+
+# @ECLASS-VARIABLE: COREOS_TARGET_DTB
+# @DESCRIPTION:
+# Devicetree blob to install, e.g. "hi6220-hikey". default is ""
+: ${COREOS_TARGET_DTB:=}
+
 COREOS_SOURCE_VERSION="${PV}${COREOS_SOURCE_REVISION}"
-COREOS_SOURCE_NAME="linux-${PV}-coreos${COREOS_SOURCE_REVISION}"
 
 [[ ${EAPI} != "5" ]] && die "Only EAPI=5 is supported"
 
@@ -20,8 +29,15 @@ SLOT="0/${PVR}"
 SRC_URI=""
 IUSE="selinux +initramfs"
 
-DEPEND="=sys-kernel/coreos-sources-${COREOS_SOURCE_VERSION}
-	initramfs? ( sys-kernel/bootengine:= )"
+DEPEND+="initramfs? ( sys-kernel/bootengine:= ) "
+
+if [[ ${COREOS_TARGET_BOARD} != "" ]]; then
+	DEPEND+="=sys-kernel/${COREOS_TARGET_BOARD}-sources-${COREOS_SOURCE_VERSION}"
+	COREOS_SOURCE_NAME="linux-${PV}-${COREOS_TARGET_BOARD}${COREOS_SOURCE_REVISION}"
+else
+	DEPEND+="=sys-kernel/coreos-sources-${COREOS_SOURCE_VERSION}"
+	COREOS_SOURCE_NAME="linux-${PV}-coreos${COREOS_SOURCE_REVISION}"
+fi
 
 # Do not analyze or strip installed files
 RESTRICT="binchecks strip"
@@ -197,6 +213,13 @@ coreos-kernel_src_install() {
 	local version=$(kmake -s --no-print-directory kernelrelease)
 	dosym "vmlinuz-${version}" /usr/boot/vmlinuz
 	dosym "config-${version}" /usr/boot/config
+
+	# Install the target devicetree blob
+	if [[ ${COREOS_TARGET_DTB} != "" ]]; then
+		cp "${KBUILD_OUTPUT}/arch/${ARCH}/boot/dts/${COREOS_TARGET_DTB}.dtb" \
+		   "${D}/usr/boot/${COREOS_TARGET_DTB}.dtb"
+		dosym "${COREOS_TARGET_DTB}.dtb" /usr/boot/devicetree
+	fi
 
 	shred_keys
 }
