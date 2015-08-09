@@ -63,9 +63,7 @@ IUSE="etcd_protocols_1 etcd_protocols_2 selinux"
 #
 ################################################################################
 
-RDEPEND="${RDEPEND}
-	virtual/linux-sources
-	"
+RDEPEND="${RDEPEND}"
 
 RDEPEND="${RDEPEND} >=sys-apps/baselayout-2.0.0"
 
@@ -146,8 +144,7 @@ RDEPEND="${RDEPEND}
 	sys-fs/e2fsprogs
 	sys-fs/mdadm
 	sys-fs/xfsprogs
-	sys-kernel/coreos-firmware
-	sys-kernel/coreos-kernel
+	sys-kernel/hikey-kernel
 	sys-libs/glibc
 	sys-libs/nss-usrfiles
 	sys-libs/timezone-data
