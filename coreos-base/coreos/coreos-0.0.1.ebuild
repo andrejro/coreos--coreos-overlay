@@ -148,7 +148,6 @@ RDEPEND="${RDEPEND}
 	sys-libs/glibc
 	sys-libs/nss-usrfiles
 	sys-libs/timezone-data
-	sys-process/lsof
 	sys-process/procps
 	app-misc/ca-certificates
 	app-crypt/gnupg
